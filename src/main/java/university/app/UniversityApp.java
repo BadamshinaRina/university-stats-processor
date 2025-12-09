@@ -23,8 +23,5 @@ public class UniversityApp {
         System.out.println(student2);
         System.out.println(student3);
 
-
-
-
-    }
+            }
 }
