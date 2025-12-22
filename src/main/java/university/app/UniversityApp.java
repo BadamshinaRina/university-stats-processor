@@ -1,27 +1,45 @@
 package university.app;
-import university.model.University;
+
+
+import university.comparator.StudentComparator;
+import university.comparator.UniversityComparator;
+import university.comparator.enums.StudentComporatorType;
+import university.comparator.enums.UniversityComporatorType;
 import university.model.Student;
-import university.model.StudyProfile;
+import university.model.University;
+import university.util.ComparatorUtil;
+import university.util.FileUtil;
+import university.util.XlsxReader;
+
+import java.util.List;
 
 public class UniversityApp {
     public static void main(String[] args) {
-        University university1 = new University("U-001", "Казанский химико-технологический университет", "КХТИ", 1890, StudyProfile.CHEMISTRY);
-        University university2 = new University("U-002", "Казанский государственный медицинский университет", "КГМУ", 1814, StudyProfile.MEDICINE);
-        University university3 = new University("U-003", "Казанский государственный архитектурно-строительный университет", "КГАСУ", 1999, StudyProfile.ARCHITECTURE);
+        System.out.println("Демонстрация компараторов и STREAM API");
+        try {
+            String filePath = FileUtil.getFilePath("universities.xlsx");
+            List<University> universities = XlsxReader.readUniversities(filePath);
+            List<Student> students = XlsxReader.readStudents(filePath);
 
-        Student student1 = new Student("Петр Иванов", "U-001", 1, 8.99f);
-        Student student2 = new Student("Мария Иванова", "U-002", 2, 9.98f);
-        Student student3 = new Student("Федор Петров", "U-003", 3, 9.33f);
+            StudentComparator studentComparator1 = ComparatorUtil.getStudentComparator(StudentComporatorType.AVG_EXAM_SCORE);
+            StudentComparator studentComparator2 = ComparatorUtil.getStudentComparator(StudentComporatorType.CURRENT_COURSE);
+            UniversityComparator universityComparator1 = ComparatorUtil.getUniversityComparator(UniversityComporatorType.FULL_NAME);
+            UniversityComparator universityComparator2 = ComparatorUtil.getUniversityComparator(UniversityComporatorType.YEARS_OF_FOUNDATION);
 
-        System.out.println("===Университеты===");
-        System.out.println(university1);
-        System.out.println(university2);
-        System.out.println(university3);
+            System.out.println("Сортировка студентов по среднему баллу");
+            students.stream().sorted(studentComparator1).forEach(System.out::println);
 
-        System.out.println("===Студенты===");
-        System.out.println(student1);
-        System.out.println(student2);
-        System.out.println(student3);
+            System.out.println("Сортировка студентов по номеру курса");
+            students.stream().sorted(studentComparator2).forEach(System.out::println);
 
-            }
+            System.out.println("Сортировка университетов по полному названию: ");
+            universities.stream().sorted(universityComparator1).forEach(System.out::println);
+
+            System.out.println("Сетировка униеврситетов по году основания");
+            universities.stream().sorted(universityComparator2).forEach(System.out::println);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }
