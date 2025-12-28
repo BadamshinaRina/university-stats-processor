@@ -1,45 +1,82 @@
 package university.app;
 
 
-import university.comparator.StudentComparator;
-import university.comparator.UniversityComparator;
-import university.comparator.enums.StudentComporatorType;
-import university.comparator.enums.UniversityComporatorType;
 import university.model.Student;
 import university.model.University;
-import university.util.ComparatorUtil;
 import university.util.FileUtil;
+import university.util.JsonUtil;
 import university.util.XlsxReader;
 
+import java.net.Socket;
 import java.util.List;
 
 public class UniversityApp {
     public static void main(String[] args) {
-        System.out.println("Демонстрация компараторов и STREAM API");
+        System.out.println("\nJSON СЕРИАЛИЗАЦИЯ И ДЕСЕРИАЛИЗАЦИЯ ");
         try {
             String filePath = FileUtil.getFilePath("universities.xlsx");
-            List<University> universities = XlsxReader.readUniversities(filePath);
-            List<Student> students = XlsxReader.readStudents(filePath);
+            List<University>  universities = XlsxReader.readUniversities(filePath);
+            List<Student>  students = XlsxReader.readStudents(filePath);
 
-            StudentComparator studentComparator1 = ComparatorUtil.getStudentComparator(StudentComporatorType.AVG_EXAM_SCORE);
-            StudentComparator studentComparator2 = ComparatorUtil.getStudentComparator(StudentComporatorType.CURRENT_COURSE);
-            UniversityComparator universityComparator1 = ComparatorUtil.getUniversityComparator(UniversityComporatorType.FULL_NAME);
-            UniversityComparator universityComparator2 = ComparatorUtil.getUniversityComparator(UniversityComporatorType.YEARS_OF_FOUNDATION);
+            System.out.println("\nДанные прочитаны: ");
+            System.out.println("Найдено университетов: " + universities.size());
+            System.out.println("Найдено студентов: " + students.size());
 
-            System.out.println("Сортировка студентов по среднему баллу");
-            students.stream().sorted(studentComparator1).forEach(System.out::println);
+            System.out.println("\nСЕРИАЛИЗАЦИЯ КОЛЛЕКЦИЙ");
 
-            System.out.println("Сортировка студентов по номеру курса");
-            students.stream().sorted(studentComparator2).forEach(System.out::println);
+            String universitiesJson = JsonUtil.serializeUniversityList(universities);
+            System.out.println("Json коллекции университетов");
+            System.out.println(universitiesJson);
 
-            System.out.println("Сортировка университетов по полному названию: ");
-            universities.stream().sorted(universityComparator1).forEach(System.out::println);
+            String studentsJson = JsonUtil.serializeStudentList(students);
+            System.out.println("Json колллекции студентов");
+            System.out.println(studentsJson);
 
-            System.out.println("Сетировка униеврситетов по году основания");
-            universities.stream().sorted(universityComparator2).forEach(System.out::println);
+            System.out.println("\nДЕСЕРИАЛИЗАЦИЯ И ПРОВЕРКА");
+
+            List <University> deserializedUniversities = JsonUtil.deserializeUniversityList(universitiesJson);
+            List <Student> deserializedStudents = JsonUtil.deserializeStudentList(studentsJson);
+            System.out.println("Проверка сериализации и десериализации университетов ->"  + (universities.size()==deserializedUniversities.size() ?
+                    " Десериализация университетов прошла успешно": "Десериализация университетов прошла некоректно"));
+            System.out.println("Проверка сериализации и десериализации студентов ->"  + (students.size()==deserializedStudents.size() ?
+                    " Десериализация студентов прошла успешно": "Десериализация студентов прошла некоректно"));
+
+            System.out.println("\nSTREAM API ОБРАБОТКА");
+            System.out.println("\n Потоковая обработка университетов");
+            universities.stream().limit(2).forEach(univer -> {
+                String json = JsonUtil.serializeUniversity(univer);
+                System.out.println("\nСериализовано " + json);
+
+                University deserialized = JsonUtil.deserializeUniversity(json);
+                System.out.println("Десериализовано " + deserialized);
+            });
+
+            System.out.println("Потоковая обработка студентов");
+            students.stream().limit(2).forEach(stud ->{
+                String json = JsonUtil.serializeStudent(stud);
+                System.out.println("\nСериализовано " + json);
+
+                Student deserialized = JsonUtil.deserializeStudent(json);
+                System.out.println("Десериализовано " + deserialized);
+            });
+
+            System.out.println("\nПРОВЕРКА АННОТАЦИЯ @SerializedName");
+
+            if(!students.isEmpty()) {
+                Student testStudent = students.get(0);
+                String json = JsonUtil.serializeStudent(testStudent);
+                System.out.println("Json c аннотациями");
+                System.out.println(json);
+
+                Student fromJson= JsonUtil.deserializeStudent(json);
+                System.out.println("Проверка работы аннотаций ->" + (testStudent.getFullName().equals(fromJson.getFullName())?
+                        " Аннотации работают верно":"Аннотации работают некорректно"));
+            }
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
+            e.printStackTrace();
         }
+
     }
 }

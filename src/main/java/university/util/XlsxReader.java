@@ -21,51 +21,51 @@ public class XlsxReader {
 
     public static List<Student> readStudents(String filePath) {
         System.out.println("\n=== НАЧАЛО readStudents() ===");
-        System.out.println("Файл: " + filePath);
+//        System.out.println("Файл: " + filePath);
 
         List<Student> students = new ArrayList<>();
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fileInputStream)) {
 
-            System.out.println("1. Workbook создан");
+//            System.out.println("1. Workbook создан");
 
             Sheet sheet = workbook.getSheet("Студенты");
-            System.out.println("2. Лист 'Студенты' найден? " + (sheet != null));
+//            System.out.println("2. Лист 'Студенты' найден? " + (sheet != null));
 
-            if (sheet == null) {
-               System.out.println("   Доступные листы:");
-                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                    System.out.println("   - " + workbook.getSheetName(i));
-                }
-                workbook.close();
-                return students;
-            }
+//            if (sheet == null) {
+//               System.out.println("   Доступные листы:");
+//                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+//                    System.out.println("   - " + workbook.getSheetName(i));
+//                }
+//                workbook.close();
+//                return students;
+//            }
 
-            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
+//            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
 
             Iterator<Row> rowIterator = sheet.iterator();
 
                         if (rowIterator.hasNext()) {
                 Row headerRow = rowIterator.next();
-                System.out.println("4. Заголовок (строка 0):");
+//                System.out.println("4. Заголовок (строка 0):");
                 for (Cell cell : headerRow) {
-                    System.out.println("   Колонка " + cell.getColumnIndex() +
-                            ": '" + getCellStringValue(cell) + "'");
+//                    System.out.println("   Колонка " + cell.getColumnIndex() +
+//                            ": '" + getCellStringValue(cell) + "'");
                 }
             }
 
-            System.out.println("5. Начинаем чтение данных...");
+//            System.out.println("5. Начинаем чтение данных...");
             int rowCount = 0;
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
                 rowCount++;
 
-                System.out.println("   Строка " + row.getRowNum() + ":");
+//                System.out.println("   Строка " + row.getRowNum() + ":");
 
                 if (isEmptyRow(row)) {
-                    System.out.println("     [ПУСТАЯ СТРОКА - пропускаем]");
+//                    System.out.println("     [ПУСТАЯ СТРОКА - пропускаем]");
                     continue;
                 }
 
@@ -75,11 +75,11 @@ public class XlsxReader {
                     Cell universityIdCell = row.getCell(1);
                     Cell courseCell = row.getCell(2);
                     Cell avgScoreCell = row.getCell(3);
-
-                    System.out.println("     Колонка 0 (ФИО): " + getCellStringValue(fullNameCell));
-                    System.out.println("     Колонка 1 (ID универа): " + getCellStringValue(universityIdCell));
-                    System.out.println("     Колонка 2 (Курс): " + getCellStringValue(courseCell));
-                    System.out.println("     Колонка 3 (Балл): " + getCellStringValue(avgScoreCell));
+//
+//                    System.out.println("     Колонка 0 (ФИО): " + getCellStringValue(fullNameCell));
+//                    System.out.println("     Колонка 1 (ID универа): " + getCellStringValue(universityIdCell));
+//                    System.out.println("     Колонка 2 (Курс): " + getCellStringValue(courseCell));
+//                    System.out.println("     Колонка 3 (Балл): " + getCellStringValue(avgScoreCell));
 
 
                     String fullName = getCellStringValue(fullNameCell);
@@ -97,7 +97,7 @@ public class XlsxReader {
 
 
                     if (fullName.isEmpty() || universityId.isEmpty()) {
-                        System.out.println("     [ПРОПУСКАЕМ - нет обязательных данных]");
+//                        System.out.println("     [ПРОПУСКАЕМ - нет обязательных данных]");
                         continue;
                     }
 
@@ -108,7 +108,7 @@ public class XlsxReader {
                             .setAvgExamScore(avgExamScore);
 
                     students.add(student);
-                    System.out.println(" Студент создан: " + student.getFullName());
+//                    System.out.println(" Студент создан: " + student.getFullName());
 
                 } catch (Exception e) {
                     System.err.println(" Ошибка в строке " + row.getRowNum() + ": " + e.getMessage());
@@ -116,8 +116,8 @@ public class XlsxReader {
             }
 
             workbook.close();
-            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
-            System.out.println("Прочитано студентов: " + students.size());
+//            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
+//            System.out.println("Прочитано студентов: " + students.size());
 
         } catch (IOException e) {
             System.err.println(" Ошибка чтения файла: " + e.getMessage());
@@ -131,48 +131,48 @@ public class XlsxReader {
 
     public static List<University> readUniversities(String filePath) {
         System.out.println("\n=== НАЧАЛО readUniversities() ===");
-        System.out.println("Файл: " + filePath);
+//        System.out.println("Файл: " + filePath);
 
         List<University> universities = new ArrayList<>();
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fileInputStream)) {
 
-            System.out.println("1. Workbook создан");
+//            System.out.println("1. Workbook создан");
 
             Sheet sheet = workbook.getSheet("Университеты");
-            System.out.println("2. Лист 'Университеты' найден? " + (sheet != null));
+//            System.out.println("2. Лист 'Университеты' найден? " + (sheet != null));
 
-            if (sheet == null) {
-                System.out.println("   Доступные листы:");
-                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                    System.out.println("   - " + workbook.getSheetName(i));
-                }
-                workbook.close();
-                return universities;
-            }
+//            if (sheet == null) {
+//                System.out.println("   Доступные листы:");
+//                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+//                    System.out.println("   - " + workbook.getSheetName(i));
+//                }
+//                workbook.close();
+//                return universities;
+//            }
 
-            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
+//            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
 
             Iterator<Row> rowIterator = sheet.iterator();
 
             if (rowIterator.hasNext()) {
                 Row headerRow = rowIterator.next();
-                System.out.println("4. Заголовок (строка 0):");
+//                System.out.println("4. Заголовок (строка 0):");
                 for (Cell cell : headerRow) {
-                    System.out.println("   Колонка " + cell.getColumnIndex() +
-                            ": '" + getCellStringValue(cell) + "'");
+//                    System.out.println("   Колонка " + cell.getColumnIndex() +
+//                            ": '" + getCellStringValue(cell) + "'");
                 }
             }
 
-            System.out.println("5. Начинаем чтение данных...");
+//            System.out.println("5. Начинаем чтение данных...");
             int rowCount = 0;
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
                 rowCount++;
 
-                System.out.println("   Строка " + row.getRowNum() + ":");
+//                System.out.println("   Строка " + row.getRowNum() + ":");
 
                 if (isEmptyRow(row)) {
                     System.out.println("     [ПУСТАЯ СТРОКА - пропускаем]");
@@ -187,12 +187,12 @@ public class XlsxReader {
                     Cell yearCell = row.getCell(3);
                     Cell profileCell = row.getCell(4);
 
-                    System.out.println("     Колонка 0 (ID): " + getCellStringValue(idCell));
-                    System.out.println("     Колонка 1 (Полное название): " + getCellStringValue(fullNameCell));
-                    System.out.println("     Колонка 2 (Короткое название): " + getCellStringValue(shortNameCell));
-                    System.out.println("     Колонка 3 (Год): " + getCellStringValue(yearCell));
-                    System.out.println("     Колонка 4 (Профиль): " + getCellStringValue(profileCell));
-
+//                    System.out.println("     Колонка 0 (ID): " + getCellStringValue(idCell));
+//                    System.out.println("     Колонка 1 (Полное название): " + getCellStringValue(fullNameCell));
+//                    System.out.println("     Колонка 2 (Короткое название): " + getCellStringValue(shortNameCell));
+//                    System.out.println("     Колонка 3 (Год): " + getCellStringValue(yearCell));
+//                    System.out.println("     Колонка 4 (Профиль): " + getCellStringValue(profileCell));
+//
 
                     String id = getCellStringValue(idCell);
                     String fullName = getCellStringValue(fullNameCell);
@@ -221,7 +221,7 @@ public class XlsxReader {
                             .setMainProfile(profile);
 
                     universities.add(university);
-                    System.out.println("Университет создан: " + university.getShortName());
+//                    System.out.println("Университет создан: " + university.getShortName());
 
                 } catch (Exception e) {
                     System.err.println("Ошибка в строке " + row.getRowNum() + ": " + e.getMessage());
@@ -229,8 +229,8 @@ public class XlsxReader {
             }
 
             workbook.close();
-            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
-            System.out.println(" Прочитано университетов: " + universities.size());
+//            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
+//            System.out.println(" Прочитано университетов: " + universities.size());
 
         } catch (IOException e) {
             System.err.println(" Ошибка чтения файла: " + e.getMessage());

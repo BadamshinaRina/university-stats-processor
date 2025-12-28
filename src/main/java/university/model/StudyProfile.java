@@ -1,16 +1,25 @@
 package university.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
 public enum StudyProfile {
+    @SerializedName("Medicine")
     MEDICINE("Медицина", "Medicine"),
+    @SerializedName("Physics")
     PHYSICS("Физика", "Physics"),
+    @SerializedName("Mathematics")
     MATHEMATICS("Математика", "Mathematics"),
+    @SerializedName("Architecture")
     ARCHITECTURE("Архитектура", "Architecture"),
+    @SerializedName("Chemistry")
     CHEMISTRY("Химия", "Chemistry"),
+    @SerializedName("Computer_science")
     COMPUTER_SCIENCE("Информатика", "Computer_science"),
+    @SerializedName("Linguistics")
     LINGUISTICS("Лингвистика", "Linguistics");
 
     private final String russianName;
