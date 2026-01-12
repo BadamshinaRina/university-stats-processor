@@ -1,10 +1,12 @@
 package university.app;
 
 
+import university.model.Statistics;
 import university.model.Student;
 import university.model.University;
 import university.util.FileUtil;
-import university.util.JsonUtil;
+import university.util.StatisticsUtil;
+import university.util.XlsWriter;
 import university.util.XlsxReader;
 
 import java.net.Socket;
@@ -12,69 +14,40 @@ import java.util.List;
 
 public class UniversityApp {
     public static void main(String[] args) {
-        System.out.println("\nJSON СЕРИАЛИЗАЦИЯ И ДЕСЕРИАЛИЗАЦИЯ ");
-        try {
-            String filePath = FileUtil.getFilePath("universities.xlsx");
-            List<University>  universities = XlsxReader.readUniversities(filePath);
-            List<Student>  students = XlsxReader.readStudents(filePath);
+        System.out.println("\nСОЗДАНИЕ ОТЧЕТОВ ПО СТАТИСТИКЕ УНИВЕРСИТЕТОВ");
 
-            System.out.println("\nДанные прочитаны: ");
-            System.out.println("Найдено университетов: " + universities.size());
-            System.out.println("Найдено студентов: " + students.size());
+        try{
+            String dataFile = FileUtil.getFilePath("universities.xlsx");
+            List<University> universities = XlsxReader.readUniversities(dataFile);
+            List <Student> students = XlsxReader.readStudents(dataFile);
 
-            System.out.println("\nСЕРИАЛИЗАЦИЯ КОЛЛЕКЦИЙ");
+            System.out.println("\n Прочитано данных");
+            System.out.println("Университетов " + universities.size());
+            System.out.println("Студентов " + students.size());
 
-            String universitiesJson = JsonUtil.serializeUniversityList(universities);
-            System.out.println("Json коллекции университетов");
-            System.out.println(universitiesJson);
+            System.out.println("\n СБОР СТАТИСТИКИ");
+            List <Statistics> statistics = StatisticsUtil.collectStatistics(universities, students);
 
-            String studentsJson = JsonUtil.serializeStudentList(students);
-            System.out.println("Json колллекции студентов");
-            System.out.println(studentsJson);
+            System.out.println("\n Собранная статистика");
+            statistics.forEach(System.out::println);
 
-            System.out.println("\nДЕСЕРИАЛИЗАЦИЯ И ПРОВЕРКА");
+            System.out.println("СОЗДАНИЕ ЕКСЕЛЬ ОТЧЕТА");
+            String reportFile = "university_statistics_report.xlsx";
+            XlsWriter.generateStatisticsTable(statistics,reportFile);
 
-            List <University> deserializedUniversities = JsonUtil.deserializeUniversityList(universitiesJson);
-            List <Student> deserializedStudents = JsonUtil.deserializeStudentList(studentsJson);
-            System.out.println("Проверка сериализации и десериализации университетов ->"  + (universities.size()==deserializedUniversities.size() ?
-                    " Десериализация университетов прошла успешно": "Десериализация университетов прошла некоректно"));
-            System.out.println("Проверка сериализации и десериализации студентов ->"  + (students.size()==deserializedStudents.size() ?
-                    " Десериализация студентов прошла успешно": "Десериализация студентов прошла некоректно"));
+            System.out.println("\n Создание детализированного отчета");
+            String detailReportFile= "university_statistics_detail_report.xlsx";
+            XlsWriter.generateDetailReport(statistics,detailReportFile);
 
-            System.out.println("\nSTREAM API ОБРАБОТКА");
-            System.out.println("\n Потоковая обработка университетов");
-            universities.stream().limit(2).forEach(univer -> {
-                String json = JsonUtil.serializeUniversity(univer);
-                System.out.println("\nСериализовано " + json);
+            System.out.println("\n Проверка корректности: ");
+            System.out.println("Стастик собрано " + statistics.size());
+            int totalStudentsInStatistics = statistics.stream().mapToInt(Statistics::getStudentCount).sum();
+            System.out.println("Всего студентов в статистике " + totalStudentsInStatistics);
+            System.out.println("Отчет создан корректно?... " + (totalStudentsInStatistics==students.size()? "Все корректно ": "Отчет создан неккоректно"));
 
-                University deserialized = JsonUtil.deserializeUniversity(json);
-                System.out.println("Десериализовано " + deserialized);
-            });
-
-            System.out.println("Потоковая обработка студентов");
-            students.stream().limit(2).forEach(stud ->{
-                String json = JsonUtil.serializeStudent(stud);
-                System.out.println("\nСериализовано " + json);
-
-                Student deserialized = JsonUtil.deserializeStudent(json);
-                System.out.println("Десериализовано " + deserialized);
-            });
-
-            System.out.println("\nПРОВЕРКА АННОТАЦИЯ @SerializedName");
-
-            if(!students.isEmpty()) {
-                Student testStudent = students.get(0);
-                String json = JsonUtil.serializeStudent(testStudent);
-                System.out.println("Json c аннотациями");
-                System.out.println(json);
-
-                Student fromJson= JsonUtil.deserializeStudent(json);
-                System.out.println("Проверка работы аннотаций ->" + (testStudent.getFullName().equals(fromJson.getFullName())?
-                        " Аннотации работают верно":"Аннотации работают некорректно"));
-            }
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        }
+        catch (Exception e) {
+            System.out.println("Ошибка создания отчетов " + e.getMessage());
             e.printStackTrace();
         }
 
