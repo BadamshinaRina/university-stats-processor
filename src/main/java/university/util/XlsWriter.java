@@ -8,13 +8,18 @@ import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class XlsWriter {
+
+    private static final Logger logger = LoggerUtil.getLogger(XlsWriter.class);
+
     private XlsWriter() {
         throw new IllegalStateException("Utility class - создание объектов класса запрещено");
     }
 
     private static CellStyle createHeaderStyle(Workbook workbook){
+        logger.fine("Создание стиля для заголовка таблицы");
         Font headerFont = workbook.createFont();
         headerFont.setBold(true);
         headerFont.setFontHeightInPoints((short) 12);
@@ -35,6 +40,7 @@ public class XlsWriter {
         return headerStyle;
     }
     private static CellStyle createDataStyle(Workbook workbook) {
+        logger.fine("Создание стиля для данных таблицы");
         Font dataFont = workbook.createFont();
         dataFont.setFontHeightInPoints((short)12);
         dataFont.setFontName("Arial");
@@ -52,6 +58,7 @@ public class XlsWriter {
         return dataStyle;
     }
     private static CellStyle createNumberStyle(Workbook workbook) {
+        logger.fine("Создание стиля для числовых данных");
         CellStyle numberCellStyle = workbook.createCellStyle();
         numberCellStyle.setFont(workbook.createFont());
         numberCellStyle.setAlignment(HorizontalAlignment.RIGHT);
@@ -67,9 +74,12 @@ public class XlsWriter {
     }
 
     public static void generateStatisticsTable(List<Statistics> statisticsList, String filePath) {
-        System.out.println("ГЕНЕРАЦИЯ EXEL-ФАЙЛА");
-        System.out.println("Файл " + filePath);
-        System.out.println("Собрано статистик " + statisticsList.size());
+
+        logger.info("Начало генерации Excel-файла "+ filePath);
+
+        if(statisticsList==null||statisticsList.isEmpty()) {
+            logger.warning("Передана пустая коллекция статистик");
+        }
 
         try(Workbook workbook = new XSSFWorkbook()){
             Sheet sheet = workbook.createSheet();
@@ -126,16 +136,15 @@ public class XlsWriter {
 
             try(FileOutputStream outputStream = new FileOutputStream(filePath)) {
                 workbook.write(outputStream);
-                System.out.println("\nФайл успешно создан " + filePath);
-                System.out.println("Записано строк " + rowNumber);
-            }
+                logger.info("Файл успешно создан");
+                            }
         } catch (Exception e) {
-            System.err.println("Ошибка при создании файла " + e.getMessage());
-            e.printStackTrace();
-        }
+            LoggerUtil.logException(logger, "Ошибка при создании файла Excel", e);
+                   }
     }
 
     private static void addSummaryRow(Sheet sheet, List<Statistics> statisticsList, int rowNum, CellStyle numberStyle, CellStyle dataStyle) {
+        logger.fine("Добавление итоговой строки в таблицу");
         Row summaryRow = sheet.createRow(rowNum);
         Cell labelCell = summaryRow.createCell(0);
         labelCell.setCellValue("ИТОГО ");
@@ -154,6 +163,7 @@ public class XlsWriter {
         }
         else {
             totalScoreCell.setCellValue("H/Д");
+            logger.fine("Средний балл не рассчитан, нет студентов");
         }
         totalScoreCell.setCellStyle(numberStyle);
 
@@ -171,105 +181,6 @@ public class XlsWriter {
         emptyCell.setCellStyle(dataStyle);
     }
 
-    public static void generateDetailReport(List <Statistics> statisticsList, String filePath){
+       }
 
-        try(Workbook workbook = new XSSFWorkbook ()){
-            Sheet summarySheet = workbook.createSheet("Сводная статистика");
-            createSummarySheet(summarySheet,statisticsList,workbook);
 
-            Sheet detailsSheet = workbook.createSheet("Детали по профилям");
-            createDetailSheet(detailsSheet, statisticsList,workbook);
-
-            Sheet chartSheet = workbook.createSheet("Диаграмма");
-            createChartSheet(chartSheet, statisticsList, workbook);
-
-        }
-        catch (Exception e) {
-            System.err.println("Ошибка при создании детализированного отчета " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private static void createSummarySheet(Sheet summarySheet, List <Statistics> statisticsList, Workbook workbook) {
-        for(int i=0; i<6; i++) {
-            summarySheet.setColumnWidth(1, 4000);
-        }
-
-        Row titleRow = summarySheet.createRow(0);
-        Cell titleCell = titleRow.createCell(0);
-        titleCell.setCellValue("Статистика по профилям обучения");
-
-        Row headerRow = summarySheet.createRow(1);
-        String [] header={"Профиль ","Средний балл","Студентов","Университетов", "% от общего", "Рейтинг"};
-        CellStyle headerStyle = createHeaderStyle(workbook);
-        for(int i=0; i<header.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(header[i]);
-            cell.setCellStyle(headerStyle);
-        }
-
-        CellStyle dataStyle = createDataStyle(workbook);
-        CellStyle percentStyle = workbook.createCellStyle();
-        percentStyle.setDataFormat(workbook.createDataFormat().getFormat("0.00%"));
-
-        int totalStudents = statisticsList.stream().mapToInt(Statistics::getStudentCount).sum();
-        int rowNum = 3;
-        for(Statistics stat: statisticsList) {
-            Row row = summarySheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(stat.getMainProfile().getEnglishName());
-
-            if(stat.getAvgExamScore()!=null) {
-                row.createCell(1).setCellValue(stat.getAvgExamScore().doubleValue());
-            }
-
-            row.createCell(2).setCellValue(stat.getStudentCount());
-            row.createCell(3).setCellValue(stat.getUniversityCount());
-
-            if(totalStudents>0) {
-                double percent = (double) stat.getStudentCount()/totalStudents;
-                Cell percentCell = row.createCell(4);
-                percentCell.setCellValue(percent);
-                percentCell.setCellStyle(percentStyle);
-            }
-
-            if(stat.getAvgExamScore()!=null) {
-                row.createCell(5).setCellValue(stat.getAvgExamScore().doubleValue()>=4.5? "Высокий " : "Средний");
-            }
-        }
-
-    }
-    private static void createDetailSheet(Sheet detailsSheet, List <Statistics> statisticsList, Workbook workbook){
-        Row headerRow = detailsSheet.createRow(0);
-        headerRow.createCell(0).setCellValue("Профиль");
-        headerRow.createCell(1).setCellValue("Детальная информация");
-
-        int rowNum=1;
-        for(Statistics stat: statisticsList) {
-            Row row = detailsSheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(stat.getMainProfile().getEnglishName());
-            String details = String.format("Студентов: %d, средний балл: %s, Университеты: %s", stat.getStudentCount(), stat.getUniversityCount(),
-            stat.getAvgExamScore()!=null? stat.getAvgExamScore().toString(): "Н/Д", stat.getUniversityName());
-            row.createCell(1).setCellValue(details);
-        }
-    }
-
-    private static void createChartSheet(Sheet chartSheet, List <Statistics> statisticsList, Workbook workbook) {
-
-        Row headerRow = chartSheet.createRow(0);
-        headerRow.createCell(0).setCellValue("Профиль");
-        headerRow.createCell(1).setCellValue("Количество студентов");
-        headerRow.createCell(2).setCellValue("Средний балл");
-
-        int rowNum = 1;
-        for (Statistics stat: statisticsList) {
-            Row row= chartSheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(stat.getMainProfile().getEnglishName());
-            row.createCell(1).setCellValue(stat.getStudentCount());
-
-            if(stat.getAvgExamScore()!=null) {
-                row.createCell(2).setCellValue(stat.getAvgExamScore().doubleValue());
-            }
-        }
-    }
-
-}

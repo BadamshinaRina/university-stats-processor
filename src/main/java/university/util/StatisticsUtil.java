@@ -1,5 +1,6 @@
 package university.util;
 
+
 import university.model.Statistics;
 import university.model.Student;
 import university.model.StudyProfile;
@@ -8,6 +9,7 @@ import university.model.University;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class StatisticsUtil {
@@ -15,15 +17,14 @@ public class StatisticsUtil {
     public StatisticsUtil () {
         throw new IllegalArgumentException("Utility class - создание объекта класса запрещено");
     }
+    private static final Logger logger = LoggerUtil.getLogger(StatisticsUtil.class);
     private static final int SCALE = 2;
 
     public static List<Statistics> collectStatistics(List <University> universities, List <Student> students) {
-        System.out.println("СБОР СТАТИСТИКИ");
+        logger.info("Начало сбора статистики");
         Map<StudyProfile, List <University>> universitiesByProfile = universities.stream()
                 .filter(u->u.getMainProfile()!=null).collect(Collectors.groupingBy(University::getMainProfile));
-        System.out.println("\nУниверситеты по профилям: ");
-        universitiesByProfile.forEach((profile, univList)->
-                System.out.println(" " + profile.getEnglishName() + " : " + univList.size()));
+        logger.fine("\nУниверситеты по профилям: ");
 
         Map<String, List<Student>> studentsByUniversity = students.stream()
                 .filter(s->s.getUniversityId()!=null).collect(Collectors.groupingBy(Student::getUniversityId));
@@ -34,12 +35,14 @@ public class StatisticsUtil {
             StudyProfile profile = entry.getKey();
             List <University> profileUniversities = entry.getValue();
 
+            logger.fine("Обработка профиля " + profile.getRussianName() + "( университетов " + profileUniversities.size()+ " )");
+
             Optional <Statistics> statisticsOptional = calculateStatisticsForProfile (profile, profileUniversities, studentsByUniversity);
 
             statisticsOptional.ifPresent(statisticsList::add);
         }
         statisticsList.sort(Comparator.comparing(stat->stat.getMainProfile().getEnglishName()));
-        System.out.println("Собрано статистик " + statisticsList.size());
+       logger.info("Собрано статистик " + statisticsList.size());
         return statisticsList;
     }
 
@@ -77,25 +80,6 @@ public class StatisticsUtil {
 
     public static BigDecimal roundToTwoDecimalPlaces(double value) {
         return BigDecimal.valueOf(value).setScale(SCALE, RoundingMode.HALF_UP);
-    }
-
-    public static Statistics getOveralStatistics(List <Student> students, List <University> universities) {
-        OptionalDouble overallAvg = students.stream().mapToDouble(Student::getAvgExamScore).average();
-        String allUniversityName = universities.stream().map(University::getShortName).sorted().collect(Collectors.joining());
-
-        return new Statistics.Builder().setMainProfile(null).setAvgExamScore(overallAvg.isEmpty()?roundToTwoDecimalPlaces(overallAvg.getAsDouble()):null)
-                .setStudentCount(students.size()).setUniversityCount(universities.size()).setUniversityName(allUniversityName).build();
-    }
-
-    public static List <Statistics> getTopProfileByScope (List <Statistics> stat, int limit, boolean ascending) {
-        return stat.stream().filter(s -> s.getAvgExamScore()!=null).sorted((s1,s2)->{
-            int comparison = s1.getAvgExamScore().compareTo(s2.getAvgExamScore());
-             return ascending?comparison:-comparison;
-        }).limit(limit).collect(Collectors.toList());
-    }
-
-    public static List <Statistics> filterByMinStudent(List <Statistics> stat, int minStudent) {
-        return stat.stream().filter(s->s.getStudentCount()>=minStudent).collect(Collectors.toList());
     }
 
 

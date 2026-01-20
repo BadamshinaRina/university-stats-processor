@@ -12,233 +12,129 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class XlsxReader {
+
+    private static final Logger logger = LoggerUtil.getLogger(XlsxReader.class);
 
     private XlsxReader() {
         throw new IllegalStateException("Utility class");
     }
 
     public static List<Student> readStudents(String filePath) {
-        System.out.println("\n=== НАЧАЛО readStudents() ===");
-//        System.out.println("Файл: " + filePath);
+        logger.info("Начинаем чтение студентов");
+
 
         List<Student> students = new ArrayList<>();
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fileInputStream)) {
 
-//            System.out.println("1. Workbook создан");
+            logger.fine("Workbook создан успешно");
 
             Sheet sheet = workbook.getSheet("Студенты");
-//            System.out.println("2. Лист 'Студенты' найден? " + (sheet != null));
 
-//            if (sheet == null) {
-//               System.out.println("   Доступные листы:");
-//                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-//                    System.out.println("   - " + workbook.getSheetName(i));
-//                }
-//                workbook.close();
-//                return students;
-//            }
-
-//            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
+            if (sheet == null) {
+               logger.warning("Лист 'Студенты' не найден в файле");
+                workbook.close();
+                return students;
+            }
 
             Iterator<Row> rowIterator = sheet.iterator();
 
-                        if (rowIterator.hasNext()) {
-                Row headerRow = rowIterator.next();
-//                System.out.println("4. Заголовок (строка 0):");
-                for (Cell cell : headerRow) {
-//                    System.out.println("   Колонка " + cell.getColumnIndex() +
-//                            ": '" + getCellStringValue(cell) + "'");
+            if (rowIterator.hasNext()) {
+                rowIterator.next();
                 }
-            }
 
-//            System.out.println("5. Начинаем чтение данных...");
-            int rowCount = 0;
+            int processedRows=0;
+            int successfulRows =0;
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                rowCount++;
-
-//                System.out.println("   Строка " + row.getRowNum() + ":");
+                processedRows++;
 
                 if (isEmptyRow(row)) {
-//                    System.out.println("     [ПУСТАЯ СТРОКА - пропускаем]");
+                    LoggerUtil.fine(logger, "Пропущена пустая строка" + row.getRowNum());
                     continue;
                 }
 
                 try {
-
-                    Cell fullNameCell = row.getCell(0);
-                    Cell universityIdCell = row.getCell(1);
-                    Cell courseCell = row.getCell(2);
-                    Cell avgScoreCell = row.getCell(3);
-//
-//                    System.out.println("     Колонка 0 (ФИО): " + getCellStringValue(fullNameCell));
-//                    System.out.println("     Колонка 1 (ID универа): " + getCellStringValue(universityIdCell));
-//                    System.out.println("     Колонка 2 (Курс): " + getCellStringValue(courseCell));
-//                    System.out.println("     Колонка 3 (Балл): " + getCellStringValue(avgScoreCell));
-
-
-                    String fullName = getCellStringValue(fullNameCell);
-                    String universityId = getCellStringValue(universityIdCell);
-
-                    int currentCourse = 1;
-                    if (courseCell != null && courseCell.getCellType() == CellType.NUMERIC) {
-                        currentCourse = (int) courseCell.getNumericCellValue();
+                    Student student = createStudentFromRow(row);
+                    if(student!=null) {
+                        students.add(student);
+                        successfulRows++;
                     }
-
-                    float avgExamScore = 0.0f;
-                    if (avgScoreCell != null && avgScoreCell.getCellType() == CellType.NUMERIC) {
-                        avgExamScore = (float) avgScoreCell.getNumericCellValue();
-                    }
-
-
-                    if (fullName.isEmpty() || universityId.isEmpty()) {
-//                        System.out.println("     [ПРОПУСКАЕМ - нет обязательных данных]");
-                        continue;
-                    }
-
-                    Student student = new Student()
-                            .setFullName(fullName)
-                            .setUniversityId(universityId)
-                            .setCurrentCourseNumber(currentCourse)
-                            .setAvgExamScore(avgExamScore);
-
-                    students.add(student);
-//                    System.out.println(" Студент создан: " + student.getFullName());
 
                 } catch (Exception e) {
-                    System.err.println(" Ошибка в строке " + row.getRowNum() + ": " + e.getMessage());
+                   logger.warning(" Ошибка в строке " + row.getRowNum() + ": " + e.getMessage());
                 }
             }
 
             workbook.close();
-//            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
-//            System.out.println("Прочитано студентов: " + students.size());
+            logger.info("Чтение студентов завершено успешно");
 
         } catch (IOException e) {
-            System.err.println(" Ошибка чтения файла: " + e.getMessage());
+            LoggerUtil.logException(logger, " Ошибка чтения файла: ", e);
         } catch (Exception e) {
-            System.err.println("Неожиданная ошибка: " + e.getMessage());
-            e.printStackTrace();
-        }
-
+            LoggerUtil.logException(logger, "Неожиданная ошибка: ",e);
+               }
         return students;
     }
 
     public static List<University> readUniversities(String filePath) {
-        System.out.println("\n=== НАЧАЛО readUniversities() ===");
-//        System.out.println("Файл: " + filePath);
+        logger.info("Начинаем чтение университетов");
 
         List<University> universities = new ArrayList<>();
 
         try (FileInputStream fileInputStream = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fileInputStream)) {
 
-//            System.out.println("1. Workbook создан");
-
+            logger.fine("Workbook создан успешно");
             Sheet sheet = workbook.getSheet("Университеты");
-//            System.out.println("2. Лист 'Университеты' найден? " + (sheet != null));
 
-//            if (sheet == null) {
-//                System.out.println("   Доступные листы:");
-//                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-//                    System.out.println("   - " + workbook.getSheetName(i));
-//                }
-//                workbook.close();
-//                return universities;
-//            }
-
-//            System.out.println("3. Всего строк в листе: " + sheet.getPhysicalNumberOfRows());
+            if (sheet == null) {
+                logger.warning("Лист Университеты не найден");
+                workbook.close();
+                return universities;
+            }
 
             Iterator<Row> rowIterator = sheet.iterator();
 
             if (rowIterator.hasNext()) {
-                Row headerRow = rowIterator.next();
-//                System.out.println("4. Заголовок (строка 0):");
-                for (Cell cell : headerRow) {
-//                    System.out.println("   Колонка " + cell.getColumnIndex() +
-//                            ": '" + getCellStringValue(cell) + "'");
-                }
+            rowIterator.next();
             }
 
-//            System.out.println("5. Начинаем чтение данных...");
-            int rowCount = 0;
+            int processedRow = 0;
+            int successfulRow = 0;
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                rowCount++;
-
-//                System.out.println("   Строка " + row.getRowNum() + ":");
+                processedRow++;
 
                 if (isEmptyRow(row)) {
-                    System.out.println("     [ПУСТАЯ СТРОКА - пропускаем]");
+                    LoggerUtil.fine(logger, "Пропущена пустая строка");
                     continue;
                 }
 
                 try {
-                    // Читаем все 5 колонок для университетов
-                    Cell idCell = row.getCell(0);
-                    Cell fullNameCell = row.getCell(1);
-                    Cell shortNameCell = row.getCell(2);
-                    Cell yearCell = row.getCell(3);
-                    Cell profileCell = row.getCell(4);
-
-//                    System.out.println("     Колонка 0 (ID): " + getCellStringValue(idCell));
-//                    System.out.println("     Колонка 1 (Полное название): " + getCellStringValue(fullNameCell));
-//                    System.out.println("     Колонка 2 (Короткое название): " + getCellStringValue(shortNameCell));
-//                    System.out.println("     Колонка 3 (Год): " + getCellStringValue(yearCell));
-//                    System.out.println("     Колонка 4 (Профиль): " + getCellStringValue(profileCell));
-//
-
-                    String id = getCellStringValue(idCell);
-                    String fullName = getCellStringValue(fullNameCell);
-                    String shortName = getCellStringValue(shortNameCell);
-
-                    int yearOfFoundation = 0;
-                    if (yearCell != null && yearCell.getCellType() == CellType.NUMERIC) {
-                        yearOfFoundation = (int) yearCell.getNumericCellValue();
+                    University university = createUniversityFromRow(row);
+                    if (university != null) {
+                        universities.add(university);
+                        successfulRow++;
                     }
-
-                    String profileText = getCellStringValue(profileCell);
-                    StudyProfile profile = StudyProfile.fromString(profileText);
-
-
-                    if (id.isEmpty() || fullName.isEmpty()) {
-                        System.out.println("     [ПРОПУСКАЕМ - нет обязательных данных]");
-                        continue;
-                    }
-
-
-                    University university = new University()
-                            .setId(id)
-                            .setFullName(fullName)
-                            .setShortName(shortName)
-                            .setYearsOfFoundation(yearOfFoundation)
-                            .setMainProfile(profile);
-
-                    universities.add(university);
-//                    System.out.println("Университет создан: " + university.getShortName());
-
-                } catch (Exception e) {
-                    System.err.println("Ошибка в строке " + row.getRowNum() + ": " + e.getMessage());
+                } catch (Exception ex) {
+                    logger.warning("Ошибка при обработке строки");
                 }
             }
-
             workbook.close();
-//            System.out.println("6. Чтение завершено. Прочитано строк: " + rowCount);
-//            System.out.println(" Прочитано университетов: " + universities.size());
+            logger.info("Чтение университетов завершено успешно");
 
-        } catch (IOException e) {
-            System.err.println(" Ошибка чтения файла: " + e.getMessage());
+    } catch (IOException e) {
+            LoggerUtil.logException(logger, " Ошибка чтения файла: ", e);
         } catch (Exception e) {
-            System.err.println(" Неожиданная ошибка: " + e.getMessage());
-            e.printStackTrace();
+            LoggerUtil.logException(logger, "Неожиданная ошибка: ",e);
         }
-
         return universities;
     }
 
@@ -298,6 +194,81 @@ public class XlsxReader {
             }
         }
         return true;
+    }
+
+    private static Student createStudentFromRow(Row row) {
+        try {
+            Cell fullNameCell = row.createCell(0);
+            Cell universityIdCell = row.createCell(1);
+            Cell courseNumberCell = row.createCell(2);
+            Cell avgScoreCell = row.createCell(3);
+
+            String fullName = getCellStringValue(fullNameCell);
+            String universityId = getCellStringValue(universityIdCell);
+
+            if (fullName.isEmpty() || universityId.isEmpty()) {
+                LoggerUtil.fine(logger, "Пропущена строка с пустыми обязательными полями");
+
+            }
+            int currentCourse = 1;
+            if (courseNumberCell != null && courseNumberCell.getCellType() == CellType.NUMERIC) {
+                currentCourse = (int) courseNumberCell.getNumericCellValue();
+            }
+
+            float avgExamScore = 0.0f;
+            if (avgScoreCell != null && avgScoreCell.getCellType() == CellType.NUMERIC) {
+                avgExamScore = (float) avgScoreCell.getNumericCellValue();
+            }
+
+            Student student = new Student().setFullName(fullName)
+                    .setUniversityId(universityId)
+                    .setCurrentCourseNumber(currentCourse)
+                    .setAvgExamScore(avgExamScore);
+
+            LoggerUtil.fine(logger,"Создан студент "+ student.getFullName());
+
+            return student;
+        } catch (Exception e) {
+           logger.warning("Ошибка создания студента");
+           return null;
+        }
+    }
+    private static University createUniversityFromRow(Row row) {
+        try{
+            Cell idCell = row.getCell(0);
+            Cell fullNameCell = row.getCell(1);
+            Cell shortNameCell = row.getCell(2);
+            Cell yearCell = row.getCell(3);
+            Cell profileCell = row.getCell(4);
+
+            String id = getCellStringValue(idCell);
+            String fullName = getCellStringValue(fullNameCell);
+            String shortName = getCellStringValue(shortNameCell);
+
+            if (id.isEmpty() || fullName.isEmpty()) {
+               LoggerUtil.fine(logger, "Пропущена строка с пустыми обязательными полями");
+            }
+
+            int yearOfFoundation = 0;
+            if (yearCell != null && yearCell.getCellType() == CellType.NUMERIC) {
+                yearOfFoundation = (int) yearCell.getNumericCellValue();
+            }
+            String profileText = getCellStringValue(profileCell);
+            StudyProfile profile = StudyProfile.fromString(profileText);
+
+            University university = new University()
+                    .setId(id)
+                    .setFullName(fullName)
+                    .setShortName(shortName)
+                    .setYearsOfFoundation(yearOfFoundation)
+                    .setMainProfile(profile);
+
+            LoggerUtil.fine(logger, "Создан университет " + university.getShortName());
+            return university;
+        } catch (Exception e) {
+           logger.warning("Ошибка создания университета");
+           return null;
+        }
     }
 
 }

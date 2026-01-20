@@ -57,9 +57,9 @@ public class JsonUtil {
     public static void saveJsonToFile(String json, String filePath) {
         try(java.io.FileWriter writer = new FileWriter(filePath)) {
             writer.write(json);
-            System.out.println("JSON сохранен в файл " + filePath);
+//            System.out.println("JSON сохранен в файл " + filePath);
         } catch (IOException e) {
-            System.err.println("Ошибка сохранения JSON в файл " + e.getMessage());
+//            System.err.println("Ошибка сохранения JSON в файл " + e.getMessage());
         }
     }
 
@@ -68,7 +68,7 @@ public class JsonUtil {
            return new Scanner(reader).useDelimiter("\\A").next();
         }
         catch (IOException e) {
-            System.err.println("Ошибка чтения JSON из файла "+ e.getMessage());
+//            System.err.println("Ошибка чтения JSON из файла "+ e.getMessage());
             return "";
         }
     }
