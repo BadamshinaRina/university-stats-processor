@@ -13,15 +13,20 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class JsonUtil {
+
+    private static final Logger logger  = LoggerUtil.getLogger(JsonUtil.class);
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").create();
+
     private JsonUtil(){
         throw new IllegalStateException("Utility class - создание экземпляров запрещено");
     }
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
 
-    public static String serializeStudent(Student student) {
+
+     public static String serializeStudent(Student student) {
         return GSON.toJson(student);
     }
 
@@ -54,12 +59,28 @@ public class JsonUtil {
         return GSON.fromJson(json, universityListType);
     }
 
+    public static <T> String serialize(T object) {
+        logger.fine("Идет сериализация объекта");
+        return GSON.toJson(object);
+    }
+
+    public static <T> String serializeList(List<T> list) {
+        logger.fine("Идет сериализация коллекции");
+        if(list==null||list.isEmpty()) {
+            logger.warning("Попытка сериализации пустой коллекции");
+            return "[]";
+        }
+        return GSON.toJson(list);
+
+    }
+
     public static void saveJsonToFile(String json, String filePath) {
         try(java.io.FileWriter writer = new FileWriter(filePath)) {
             writer.write(json);
-//            System.out.println("JSON сохранен в файл " + filePath);
+            logger.info("Json сохранен в файл " +filePath);
+
         } catch (IOException e) {
-//            System.err.println("Ошибка сохранения JSON в файл " + e.getMessage());
+            System.err.println("Ошибка сохранения JSON в файл " + e.getMessage());
         }
     }
 
@@ -68,7 +89,7 @@ public class JsonUtil {
            return new Scanner(reader).useDelimiter("\\A").next();
         }
         catch (IOException e) {
-//            System.err.println("Ошибка чтения JSON из файла "+ e.getMessage());
+            System.err.println("Ошибка чтения JSON из файла "+ e.getMessage());
             return "";
         }
     }
